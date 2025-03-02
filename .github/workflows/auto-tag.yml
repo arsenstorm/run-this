@@ -87,4 +87,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           event-type: release-event
+          client-payload: '{"version": "${{ steps.cargo-version.outputs.version }}"}'
           repository: ${{ github.repository }}
