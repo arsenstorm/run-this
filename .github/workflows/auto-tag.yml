@@ -80,3 +80,11 @@ jobs:
           git push origin "v$VERSION" --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release by triggering release workflow
+        if: steps.compare-versions.outputs.increased == 'true'
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: release-event
+          repository: ${{ github.repository }}
