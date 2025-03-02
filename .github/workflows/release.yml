@@ -81,6 +81,8 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -88,16 +90,16 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          merge-multiple: true
 
-      - name: List downloaded artifacts
-        run: find artifacts -type f | sort
+      - name: List files
+        run: ls -la
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**/*
+          files: run-this-${{ github.ref_name }}-*
           draft: false
           prerelease: false
           generate_release_notes: true
