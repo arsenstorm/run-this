@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Get version from Cargo.toml
         id: cargo-version
@@ -24,7 +26,51 @@ jobs:
           echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current version: $CURRENT_VERSION"
 
+      - name: Get latest tag
+        id: latest-tag
+        run: |
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1 || echo "v0.0.0")
+          LATEST_VERSION=${LATEST_TAG#v}
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG (version: $LATEST_VERSION)"
+
+      - name: Compare versions
+        id: compare-versions
+        run: |
+          CURRENT_VERSION="${{ steps.cargo-version.outputs.version }}"
+          LATEST_VERSION="${{ steps.latest-tag.outputs.version }}"
+          
+          # Convert versions to arrays for comparison
+          IFS='.' read -ra CURRENT <<< "$CURRENT_VERSION"
+          IFS='.' read -ra LATEST <<< "$LATEST_VERSION"
+          
+          # Compare major version
+          if [[ ${CURRENT[0]} -gt ${LATEST[0]} ]]; then
+            INCREASED=true
+          elif [[ ${CURRENT[0]} -eq ${LATEST[0]} ]]; then
+            # Compare minor version
+            if [[ ${CURRENT[1]} -gt ${LATEST[1]} ]]; then
+              INCREASED=true
+            elif [[ ${CURRENT[1]} -eq ${LATEST[1]} ]]; then
+              # Compare patch version
+              if [[ ${CURRENT[2]} -gt ${LATEST[2]} ]]; then
+                INCREASED=true
+              else
+                INCREASED=false
+              fi
+            else
+              INCREASED=false
+            fi
+          else
+            INCREASED=false
+          fi
+          
+          echo "increased=$INCREASED" >> $GITHUB_OUTPUT
+          echo "Version increased: $INCREASED"
+
       - name: Create and push tag
+        if: steps.compare-versions.outputs.increased == 'true'
         run: |
           VERSION=${{ steps.cargo-version.outputs.version }}
           echo "Creating tag v$VERSION"
