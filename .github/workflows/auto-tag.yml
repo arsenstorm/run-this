@@ -40,11 +40,42 @@ jobs:
             echo "version_changed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create tag
+      - name: Create tag using GitHub API
         if: steps.check-version.outputs.version_changed == 'true'
-        run: |
-          NEW_VERSION=${{ steps.check-version.outputs.new_version }}
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
-          git push origin "v$NEW_VERSION"
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const newVersion = '${{ steps.check-version.outputs.new_version }}';
+            const tagName = `v${newVersion}`;
+            const ref = `refs/tags/${tagName}`;
+            
+            // Get the current commit SHA
+            const { data: { sha } } = await github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'heads/main'
+            });
+            
+            console.log(`Creating tag ${tagName} at commit ${sha}`);
+            
+            try {
+              // Create the tag reference
+              await github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: ref,
+                sha: sha
+              });
+              
+              console.log(`Successfully created tag ${tagName}`);
+            } catch (error) {
+              console.log(`Error creating tag: ${error.message}`);
+              
+              // If the tag already exists, this is not an error
+              if (error.message.includes('Reference already exists')) {
+                console.log(`Tag ${tagName} already exists`);
+              } else {
+                throw error;
+              }
+            }
