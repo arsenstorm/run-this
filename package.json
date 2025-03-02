@@ -1,6 +1,6 @@
 {
 	"name": "run-this",
-	"version": "0.1.0",
+	"version": "0.1.3",
 	"description": "A rust utility that gracefully handles missing command dependencies",
 	"scripts": {
 		"build": "cargo build",
@@ -9,6 +9,8 @@
 		"setup": "bun run build:release && bun run install",
 		"format": "cargo fmt",
 		"test": "cargo test",
-		"lint": "cargo clippy --fix --allow-dirty --allow-staged"
+		"lint": "cargo clippy --fix --allow-dirty --allow-staged",
+		"tag": "git tag -a v${npm_package_version} -m 'v${npm_package_version}' && git push origin v${npm_package_version}",
+		"tag:main": "git tag -a v${npm_package_version} -m 'v${npm_package_version}' && git push main v${npm_package_version}"
 	}
 }
