@@ -16,62 +16,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
 
-      - name: Get previous package.json
-        run: git show HEAD~1:package.json > previous-package.json
-
-      - name: Check version change
-        id: check-version
-        run: |
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          PREVIOUS_VERSION=$(node -p "require('./previous-package.json').version" 2>/dev/null || echo "0.0.0")
-          
-          echo "Current version: $CURRENT_VERSION"
-          echo "Previous version: $PREVIOUS_VERSION"
-          
-          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
-            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
-            echo "version_changed=true" >> $GITHUB_OUTPUT
-            echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          else
-            echo "Version unchanged"
-            echo "version_changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create tag using GitHub API
-        if: steps.check-version.outputs.version_changed == 'true'
-        uses: actions/github-script@v6
+      - name: Auto Tag
+        id: tagger
+        uses: phish108/autotag-action@v1.1.64
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const newVersion = '${{ steps.check-version.outputs.new_version }}';
-            const tagName = `v${newVersion}`;
-            const ref = `refs/tags/${tagName}`;
-            
-            // Get the SHA of the current commit directly from the context
-            const sha = context.sha;
-            
-            console.log(`Creating tag ${tagName} at commit ${sha}`);
-            
-            try {
-              // Create the tag reference
-              await github.rest.git.createRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: ref,
-                sha: sha
-              });
-              
-              console.log(`Successfully created tag ${tagName}`);
-            } catch (error) {
-              console.log(`Error creating tag: ${error.message}`);
-              
-              // If the tag already exists, this is not an error
-              if (error.message.includes('Reference already exists')) {
-                console.log(`Tag ${tagName} already exists`);
-              } else {
-                throw error;
-              }
-            }
+          with-v: "true"
