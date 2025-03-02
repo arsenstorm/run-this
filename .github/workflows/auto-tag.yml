@@ -86,6 +86,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          event-type: release-event
+          event-type: release-v${{ steps.cargo-version.outputs.version }}
           client-payload: '{"version": "${{ steps.cargo-version.outputs.version }}"}'
           repository: ${{ github.repository }}

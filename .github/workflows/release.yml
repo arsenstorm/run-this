@@ -5,7 +5,7 @@ on:
     tags:
       - 'v*'
   repository_dispatch:
-    types: [release-event]
+    types: [release-v*]
 
 jobs:
   build:
