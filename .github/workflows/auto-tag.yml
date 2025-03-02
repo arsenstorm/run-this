@@ -50,12 +50,8 @@ jobs:
             const tagName = `v${newVersion}`;
             const ref = `refs/tags/${tagName}`;
             
-            // Get the current commit SHA
-            const { data: { sha } } = await github.rest.git.getRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'heads/main'
-            });
+            // Get the SHA of the current commit directly from the context
+            const sha = context.sha;
             
             console.log(`Creating tag ${tagName} at commit ${sha}`);
             

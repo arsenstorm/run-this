@@ -1,6 +1,6 @@
 {
 	"name": "run-this",
-	"version": "0.1.7",
+	"version": "0.1.8",
 	"description": "A rust utility that gracefully handles missing command dependencies",
 	"scripts": {
 		"build": "cargo build",
