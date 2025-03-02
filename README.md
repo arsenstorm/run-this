@@ -125,20 +125,6 @@ To run all tests:
 cargo test
 ```
 
-### Test Organization
-
-Tests are organized in the following structure:
-
-```
-src/
-  tests/
-    mod.rs           # Main test module
-    unit_tests.rs    # Unit tests
-    cli_tests.rs     # CLI integration tests
-    platform_tests.rs # Platform-specific tests
-    common/          # Shared test utilities
-```
-
 ## License
 
 MIT
