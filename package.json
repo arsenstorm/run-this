@@ -9,8 +9,6 @@
 		"setup": "bun run build:release && bun run install",
 		"format": "cargo fmt",
 		"test": "cargo test",
-		"lint": "cargo clippy --fix --allow-dirty --allow-staged",
-		"tag": "git tag -a v${npm_package_version} -m 'v${npm_package_version}' && git push origin v${npm_package_version}",
-		"tag:main": "git tag -a v${npm_package_version} -m 'v${npm_package_version}' && git push main v${npm_package_version}"
+		"lint": "cargo clippy --fix --allow-dirty --allow-staged"
 	}
 }
