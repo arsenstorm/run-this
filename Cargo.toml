@@ -1,0 +1,28 @@
+[package]
+name = "run-this"
+version = "0.1.0"
+edition = "2021"
+description = "A utility that gracefully handles missing command dependencies"
+authors = ["Arsen Shkrumelyak <arsen@shkrumelyak.com>"]
+license = "MIT"
+repository = "https://github.com/arsenstorm/run-this"
+readme = "README.md"
+keywords = ["cli", "utility", "dependencies"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+colored = "3.0.0"
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+which = "7.0.2"
+
+[dev-dependencies]
+tempfile = "3.8.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
