@@ -78,7 +78,15 @@ function Install-Binary {
     
     # Download the binary
     Write-Host "Downloading from $script:DownloadUrl"
-    $tempFile = "$env:TEMP\$assetName"
+    
+    # Ensure temp directory exists
+    $tempDir = [System.IO.Path]::GetTempPath()
+    if (-not (Test-Path $tempDir)) {
+        Write-Host "Creating temporary directory..."
+        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+    }
+    
+    $tempFile = Join-Path $tempDir $assetName
     
     try {
         Invoke-WebRequest -Uri $script:DownloadUrl -OutFile $tempFile -UseBasicParsing
