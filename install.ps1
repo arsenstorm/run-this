@@ -17,7 +17,7 @@ Write-Host "`nrun-this installer" -ForegroundColor Blue
 Write-Host "A utility that gracefully handles missing command dependencies`n"
 
 # Detect architecture
-function Detect-Architecture {
+function Get-Architecture {
     $arch = [System.Environment]::GetEnvironmentVariable("PROCESSOR_ARCHITECTURE")
     
     if ($arch -eq "AMD64") {
@@ -97,7 +97,7 @@ function Install-Binary {
 }
 
 # Add to PATH if needed
-function Setup-Path {
+function Update-Path {
     $userPath = [System.Environment]::GetEnvironmentVariable("PATH", "User")
     
     if (-not $userPath.Contains($BinDir)) {
@@ -119,10 +119,10 @@ function Setup-Path {
 }
 
 # Run the installation
-$Arch = Detect-Architecture
+$Arch = Get-Architecture
 Get-LatestRelease
 Install-Binary
-Setup-Path
+Update-Path
 
 Write-Host "`nrun-this has been successfully installed!" -ForegroundColor Green
 Write-Host "Run 'run-this --help' to get started"
