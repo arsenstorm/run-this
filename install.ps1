@@ -46,13 +46,13 @@ function Get-LatestRelease {
         }
         
         # Construct asset name based on architecture
-        $assetName = "run-this-$version-windows-$script:Arch.zip"
+        $script:AssetName = "run-this-$version-windows-$script:Arch.zip"
         
         # Find download URL for the asset
-        $asset = $releaseInfo.assets | Where-Object { $_.name -eq $assetName }
+        $asset = $releaseInfo.assets | Where-Object { $_.name -eq $script:AssetName }
         
         if (-not $asset) {
-            Write-Host "Error: Could not find download URL for $assetName" -ForegroundColor Red
+            Write-Host "Error: Could not find download URL for $script:AssetName" -ForegroundColor Red
             exit 1
         }
         
@@ -86,20 +86,38 @@ function Install-Binary {
         New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
     }
     
-    $tempFile = Join-Path $tempDir $assetName
+    $tempFile = Join-Path $tempDir $script:AssetName
+    
+    Write-Host "Temporary file path: $tempFile"
+    Write-Host "Checking temporary directory exists: $tempDir"
+    
+    if (Test-Path $tempDir) {
+        Write-Host "Temporary directory exists and is accessible"
+    } else {
+        Write-Host "Warning: Temporary directory is not accessible"
+    }
     
     try {
+        Write-Host "Attempting to download file..."
         Invoke-WebRequest -Uri $script:DownloadUrl -OutFile $tempFile -UseBasicParsing
         
-        # Extract the binary
-        Write-Host "Extracting..."
-        Expand-Archive -Path $tempFile -DestinationPath $BinDir -Force
-        Remove-Item $tempFile
-        
-        Write-Host "Successfully installed run-this to $ExecPath" -ForegroundColor Green
+        if (Test-Path $tempFile) {
+            Write-Host "File downloaded successfully"
+            # Extract the binary
+            Write-Host "Extracting..."
+            Expand-Archive -Path $tempFile -DestinationPath $BinDir -Force
+            Remove-Item $tempFile
+            
+            Write-Host "Successfully installed run-this to $ExecPath" -ForegroundColor Green
+        } else {
+            Write-Host "Error: Download appeared to succeed but file not found at $tempFile" -ForegroundColor Red
+            exit 1
+        }
     }
     catch {
         Write-Host "Error downloading or extracting: $_" -ForegroundColor Red
+        Write-Host "Download URL: $script:DownloadUrl"
+        Write-Host "Temp file path: $tempFile"
         exit 1
     }
 }
