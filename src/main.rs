@@ -50,7 +50,7 @@ fn detect_os() -> Platform {
 }
 
 #[cfg(windows)]
-fn find_windows_executable(command: &str) -> Option<std::path::PathBuf> {
+fn find_windows_executable(command: &str) -> Option<(std::path::PathBuf, bool)> {
     use std::path::PathBuf;
 
     // Get the PATH environment variable
@@ -60,6 +60,12 @@ fn find_windows_executable(command: &str) -> Option<std::path::PathBuf> {
     let pathext = pathext.to_string_lossy().to_uppercase();
     let extensions: Vec<&str> = pathext.split(';').filter(|s| !s.is_empty()).collect();
 
+    // Helper function to check if an extension is a script/batch file
+    let is_script = |ext: &str| {
+        let ext = ext.to_uppercase();
+        ext == ".BAT" || ext == ".CMD" || ext == ".PS1" || ext == ".VBS"
+    };
+
     // If the command already has an extension that's in PATHEXT, search for it exactly
     let command_path = PathBuf::from(command);
     if let Some(ext) = command_path.extension() {
@@ -68,7 +74,7 @@ fn find_windows_executable(command: &str) -> Option<std::path::PathBuf> {
             for dir in env::split_paths(&path) {
                 let full_path = dir.join(&command_path);
                 if full_path.is_file() {
-                    return Some(full_path);
+                    return Some((full_path, is_script(&ext)));
                 }
             }
             return None;
@@ -80,7 +86,7 @@ fn find_windows_executable(command: &str) -> Option<std::path::PathBuf> {
         // First try the exact command name
         let full_path = dir.join(command);
         if full_path.is_file() {
-            return Some(full_path);
+            return Some((full_path, false)); // Assume binary if no extension
         }
 
         // Then try with each extension
@@ -88,7 +94,7 @@ fn find_windows_executable(command: &str) -> Option<std::path::PathBuf> {
             let mut full_path = dir.join(command);
             full_path.set_extension(&ext[1..]); // Remove the leading dot from extension
             if full_path.is_file() {
-                return Some(full_path);
+                return Some((full_path, is_script(ext)));
             }
         }
     }
@@ -221,8 +227,17 @@ fn load_config() -> Option<Config> {
 fn run_command(command: &str, args: &[String]) -> Result<ExitStatus, std::io::Error> {
     #[cfg(windows)]
     {
-        if let Some(exe_path) = find_windows_executable(command) {
-            return Command::new(exe_path).args(args).status();
+        if let Some((exe_path, is_script)) = find_windows_executable(command) {
+            if is_script {
+                // For batch files and scripts, we need to use cmd.exe
+                return Command::new("cmd")
+                    .arg("/c")
+                    .arg(exe_path)
+                    .args(args)
+                    .status();
+            } else {
+                return Command::new(exe_path).args(args).status();
+            }
         }
         // This should never happen since we check existence before calling run_command
         return Err(std::io::Error::new(
